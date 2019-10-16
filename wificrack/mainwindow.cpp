@@ -32,6 +32,7 @@ void MainWindow::slot_file_changed(QString path)
         if(strName == QString::fromLocal8Bit("ap.txt"))
         {
                     QString displayString;
+                    displayString.append("BSSID\t\tCH\tESSID\n");
                     QFile file("./ap.txt");
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
@@ -43,7 +44,16 @@ void MainWindow::slot_file_changed(QString path)
                        QByteArray line = file.readLine();
                        QString str(line);
             //           qDebug()<< str;
-                       displayString.append(str);
+                       QStringList list = str.simplified().split(" ");
+                       if(list.length() < 3)
+                                continue;
+                       displayString.append(list.at(0));
+                       displayString.append("\t");
+                       displayString.append(list.at(1));
+                       displayString.append("\t");
+                       displayString.append(list.at(2));
+                       displayString.append("\n");
+//                       displayString.append(str);
                    }
                     ui->textEdit_AP->clear();
                     ui->textEdit_AP->setPlainText(displayString);
