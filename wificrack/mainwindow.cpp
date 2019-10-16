@@ -2,6 +2,9 @@
 #include "ui_mainwindow.h"
 #include "FileSystemWatcher.h"
 #include <QDebug>
+#include <QDir>
+#include <QFileInfo>
+#include <QTextStream>
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -9,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bash = new QProcess(this);
 
     ap_file = new FileSystemWatcher();
-    connect(ap_file, SIGNAL(emit_signal_ap_data_changed(QString)), this, SLOT(ap_file_changed(QString)));
+    connect(ap_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
     ap_file->addWatchPath("./ap.txt");
 
     ui->setupUi(this);
@@ -20,33 +23,42 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::ap_file_changed(QString displayString)
+void MainWindow::slot_file_changed(QString path)
 {
-    qDebug() << "SLOT   ap_file_changed" << endl;
-    ui->textEdit_AP->clear();
-    ui->textEdit_AP->setPlainText(displayString);
+        QFileInfo file(path);
+        QString strPath = file.absolutePath();
+        QString strName = file.fileName();
+
+        if(strName == QString::fromLocal8Bit("ap.txt"))
+        {
+                    QString displayString;
+                    QFile file("./ap.txt");
+                    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    {
+                        qDebug() << "open ap.txt error\n" << endl;
+                   }
+
+                    while(!file.atEnd())
+                   {
+                       QByteArray line = file.readLine();
+                       QString str(line);
+            //           qDebug()<< str;
+                       displayString.append(str);
+                   }
+                    ui->textEdit_AP->clear();
+                    ui->textEdit_AP->setPlainText(displayString);
+        }
 }
 
-void MainWindow::station_file_changed(QString displayString)
-{
 
-}
 
-void MainWindow::handshake_file_changed(QString displayString)
-{
-
-}
 
 
 
 void MainWindow::on_pushButton_scan_clicked()
 {
-
-
-
         bash->start("bash");
         bash->waitForStarted();
-
 
         if(ui->pushButton_scan->text() == "scan")
         {
@@ -68,5 +80,4 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_interface->setEnabled(true);
             ui->pushButton_scan->setText("scan");
         }
-
 }

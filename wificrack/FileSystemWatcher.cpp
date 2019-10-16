@@ -37,6 +37,8 @@ void FileSystemWatcher::addWatchPath(QString path)
         // 连接QFileSystemWatcher的directoryChanged和fileChanged信号到相应的槽
         connect(m_pInstance->m_pSystemWatcher, SIGNAL(directoryChanged(QString)), m_pInstance, SLOT(directoryUpdated(QString)));
         connect(m_pInstance->m_pSystemWatcher, SIGNAL(fileChanged(QString)), m_pInstance, SLOT(fileUpdated(QString)));
+
+        connect(m_pInstance->m_pSystemWatcher, SIGNAL(fileChanged(QString)), this, SIGNAL(emit_signal_file_changed(QString)));
 //    }
 
     // 添加监控路径
@@ -110,29 +112,6 @@ void FileSystemWatcher::fileUpdated(const QString &path)
     QString strPath = file.absolutePath();
     QString strName = file.fileName();
 
-    if(strName == QString::fromLocal8Bit("ap.txt"))
-    {
-                QString displayString;
-                QFile file("./ap.txt");
-                if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-                {
-                    qDebug() << "open ap.txt error\n" << endl;
-                }
-
-                while(!file.atEnd())
-               {
-                   QByteArray line = file.readLine();
-                   QString str(line);
-        //           qDebug()<< str;
-                   displayString.append(str);
-               }
-
-                emit emit_signal_ap_data_changed(displayString);
-                 qDebug() << QString("The file %1 at path %2 is updated").arg(strName).arg(strPath);
-    }
-
-
-
-
+     qDebug() << QString("The file %1 at path %2 is updated").arg(strName).arg(strPath);
  }
 

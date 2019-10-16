@@ -18,13 +18,9 @@ public:
     ~MainWindow();
 
 private slots:
-    void ap_file_changed(QString displayString);
-    void station_file_changed(QString displayString);
-    void handshake_file_changed(QString displayString);
+    void slot_file_changed(QString path);
 
     void on_pushButton_scan_clicked();
-
-
 
 private:
     Ui::MainWindow *ui;

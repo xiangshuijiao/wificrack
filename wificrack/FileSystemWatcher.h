@@ -15,7 +15,7 @@ public:
     void addWatchPath(QString path);
 
 signals:
-    void emit_signal_ap_data_changed(QString displayString);
+    void emit_signal_file_changed(QString path);
 
 
 public slots:
@@ -26,7 +26,6 @@ private:
     FileSystemWatcher *m_pInstance;
     QFileSystemWatcher *m_pSystemWatcher;  // QFileSystemWatcher变量
     QMap<QString, QStringList> m_currentContentsMap; // 当前每个监控的内容目录列表
-
 };
 
 #endif // FILESYSTEMWATCHER_H
