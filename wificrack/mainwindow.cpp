@@ -2,7 +2,6 @@
 #include "ui_mainwindow.h"
 #include "FileSystemWatcher.h"
 
-#include "wpa2break.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -41,6 +40,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(handshake_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
     handshake_file->addWatchPath("./handshake.txt");
 
+    // key file watcher
+    key_file = new FileSystemWatcher();
+    connect(key_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
+    key_file->addWatchPath("./key.txt");
+
+    // show2 file watcher
+    show2_file = new FileSystemWatcher();
+    connect(show2_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
+    show2_file->addWatchPath("./show2.txt");
 
     ui->lineEdit_interface->setPlaceholderText("INTERFACE NAME");
     ui->lineEdit_BSSID->setPlaceholderText("BSSID MAC");
@@ -139,7 +147,7 @@ void MainWindow::slot_file_changed(QString path)
 
                        // must under { ui->setupUi(this); }
                        ui->statusBar->setSizeGripEnabled(false);
-                       ui->statusBar->showMessage( "FRAME COUNT : " +  list.at(0));
+                       ui->statusBar->showMessage( "FRAME NUMBER : " +  list.at(0));
                    }
         }
 
@@ -162,17 +170,78 @@ void MainWindow::slot_file_changed(QString path)
                        count++;
                        switch(count)
                        {
-                                case 1:  displayString.append("破解需要的握手信息:\nSSID : " + str + "\n"); break;
+                                case 1:  displayString.append("握手信息:\nSSID : " + str + "\n"); break;
                                 case 2:  displayString.append("AP MAC : " + str + "\n"); break;
                                 case 3:  displayString.append("STATION MAC : " + str + "\n"); break;
                                 case 4:  displayString.append("AP Nonce : " + str + "\n"); break;
                                 case 5:  displayString.append("STATION Nonce : " + str + "\n"); break;
                                 case 6:  displayString.append("Step2 Data : " + str + "\n"); break;
                                 case 7:  displayString.append("MIC : " + str + "\n"); break;
-                                case 8:  displayString.append("被破解的AP:\nSSID : " + str); break;
+                                case 8:  displayString.append("被破解的AP:\nSSID : " + str);
+                                              AP_SSID = str;break;
                        }
                    }
                    QMessageBox::information(this, "抓取到破解密钥所需要的信息", displayString);
+        }
+
+
+
+        // show2.txt changed
+        if(strName == QString::fromLocal8Bit("show2.txt"))
+        {
+                    QString displayString;
+                    QFile file("./show2.txt");
+                    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    {
+                        qDebug() << "open show2.txt error\n" << endl;
+                   }
+                    while(!file.atEnd())
+                   {
+
+                       QByteArray line = file.readLine();
+                       QString str(line);
+                       str = str.simplified();
+                       ui->statusBar->setSizeGripEnabled(false);
+                       ui->statusBar->showMessage( "KEY NUMBER : " +  str);
+                   }
+        }
+
+        // key.txt changed
+        if(strName == QString::fromLocal8Bit("key.txt"))
+        {
+                    QString displayString;
+                    QFile file("./key.txt");
+                    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    {
+                        qDebug() << "open key.txt error\n" << endl;
+                   }
+                    int count = 0;
+                    while(!file.atEnd())
+                   {
+                       QByteArray line = file.readLine();
+                       QString str(line);
+                       str = str.simplified();
+                       count++;
+                       switch(count)
+                       {
+                                case 1:  displayString.append("破解 [ "+ AP_SSID + " ] 使用了 [ " +  str   +" ] 条字典中的密码" + "\n"); break;
+                                case 2:
+                                              if ( str == "failed")
+                                              {
+                                                        displayString.append("字典中无有效密码\n");
+                                                        count = 1000;  // not execute case 3;
+                                              }
+                                              else
+                                              {
+                                                        displayString.append("破解成功, 密码为 [ ");
+                                              }
+                                              break;
+
+                                case 3:  displayString.append(str + " ]"); break;
+                                default: break;
+                       }
+                   }
+                   QMessageBox::information(this, "破解结果", displayString);
         }
 }
 
@@ -234,8 +303,7 @@ void MainWindow::on_pushButton_scan_clicked()
 
 void MainWindow::on_pushButton_crack_clicked()
 {
-
-    if(ui->pushButton_crack->text() == "crack")
+    if(ui->pushButton_scan->text() == "crack")
     {
         if(ui->lineEdit_dictionary->text().toLocal8Bit() == "")
         {
@@ -243,79 +311,31 @@ void MainWindow::on_pushButton_crack_clicked()
                 return;
         }
 
+        bash->start("bash");
+        bash->waitForStarted();
+        QString command("./crack  " + ui->lineEdit_dictionary->text().toLocal8Bit() );
+        command.append("\n");
+        qDebug() << command;
+        QByteArray qba = command.toLatin1();
+        bash->write(qba.data());
+
         ui->pushButton_scan->setEnabled(false);
         ui->lineEdit_BSSID->setEnabled(false);
         ui->lineEdit_CH->setEnabled(false);
         ui->lineEdit_interface->setEnabled(false);
         ui->lineEdit_dictionary->setEnabled(false);
-        ui->pushButton_crack->setEnabled(false);
+        ui->pushButton_crack->setText("cancel");
+    }
+    else
+    {
+        bash->kill();
 
-        wpa2_handshake_t t_handshake;
-        FILE* t_file=fopen("handshake.txt","r");
-        char t_buffer[1024];
-        fgets(t_buffer,sizeof(t_buffer),t_file);
-        hex2bin(t_buffer,t_handshake.ssid);
-        t_handshake.ssid_len=strlen((char*)t_handshake.ssid);
-        fgets(t_buffer,sizeof(t_buffer),t_file);
-        hex2bin(t_buffer,t_handshake.ap_mac);
-        fgets(t_buffer,sizeof(t_buffer),t_file);
-        hex2bin(t_buffer,t_handshake.sta_mac);
-        fgets(t_buffer,sizeof(t_buffer),t_file);
-        hex2bin(t_buffer,t_handshake.ap_nonce);
-        fgets(t_buffer,sizeof(t_buffer),t_file);
-        hex2bin(t_buffer,t_handshake.sta_nonce);
-        fgets(t_buffer,sizeof(t_buffer),t_file);
-        hex2bin(t_buffer,t_handshake.step2_data);
-        fgets(t_buffer,sizeof(t_buffer),t_file);
-        hex2bin(t_buffer,t_handshake.step2_mic);
-        fclose(t_file);
-        wpa2break_init_mid_value(&t_handshake);
-
-
-
-        FILE *fp;
-        char str[256];
-        long count = 0;
-        if((fp=fopen(ui->lineEdit_dictionary->text().toLocal8Bit(), "r")) == NULL){
-            qDebug() << "cannot open file " +  ui->lineEdit_dictionary->text().toLocal8Bit();
-            return;
-        }
-
-
-
-
-        while(!feof(fp))
-        {
-            if(fgets(str, sizeof(str), fp) != NULL)
-            {
-                count++;
-                ui->statusBar->setSizeGripEnabled(false);
-                ui->statusBar->showMessage( "KEY COUNT : " +  QString::number(count));
-
-                str[strlen(str)-2] = '\0';
-                if (1 == wpa2break_is_password(&t_handshake,(uint8_t*)str, strlen(str)))
-                {
-                    QMessageBox::information(this,  "KEY FOUND", "KEY ： " + QString(QLatin1String(str)));
-                    ui->pushButton_crack->setEnabled(true);
-                    ui->lineEdit_BSSID->setEnabled(true);
-                    ui->lineEdit_CH->setEnabled(true);
-                    ui->lineEdit_interface->setEnabled(true);
-                    ui->lineEdit_dictionary->setEnabled(true);
-                    ui->pushButton_scan->setEnabled(true);
-                    return;
-                }
-            }
-        }
-        QMessageBox::information(this,  "KEY NOT FOUND", "There is no valid password in the dictionary!!! ");
-
-
-        ui->pushButton_crack->setEnabled(true);
+        ui->pushButton_scan->setEnabled(true);
         ui->lineEdit_BSSID->setEnabled(true);
         ui->lineEdit_CH->setEnabled(true);
         ui->lineEdit_interface->setEnabled(true);
         ui->lineEdit_dictionary->setEnabled(true);
-        ui->pushButton_scan->setEnabled(true);
-
-
+        ui->pushButton_crack->setText("crack");
     }
+
 }
