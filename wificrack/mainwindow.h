@@ -22,6 +22,8 @@ private slots:
 
     void on_pushButton_scan_clicked();
 
+    void on_pushButton_crack_clicked();
+
 private:
     Ui::MainWindow *ui;
     QProcess *bash;

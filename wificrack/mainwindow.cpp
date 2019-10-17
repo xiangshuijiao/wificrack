@@ -1,6 +1,12 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "FileSystemWatcher.h"
+
+#include "wpa2break.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -133,29 +139,40 @@ void MainWindow::slot_file_changed(QString path)
 
                        // must under { ui->setupUi(this); }
                        ui->statusBar->setSizeGripEnabled(false);
-                       ui->statusBar->showMessage( "COUNT : " +  list.at(0));
+                       ui->statusBar->showMessage( "FRAME COUNT : " +  list.at(0));
                    }
         }
 
-        // show.txt changed
-        if(strName == QString::fromLocal8Bit("show.txt"))
+        // handshake.txt changed
+        if(strName == QString::fromLocal8Bit("handshake.txt"))
         {
                     QString displayString;
-                    QFile file("./show.txt");
+                    QFile file("./handshake.txt");
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        qDebug() << "open show.txt error\n" << endl;
+                        qDebug() << "open handshake.txt error\n" << endl;
                    }
+                    int count = 0;
                     while(!file.atEnd())
                    {
+
                        QByteArray line = file.readLine();
                        QString str(line);
-                       QStringList list = str.simplified().split(" ");
-
-                       // must under { ui->setupUi(this); }
-                       ui->statusBar->setSizeGripEnabled(false);
-                       ui->statusBar->showMessage( "COUNT : " +  list.at(0));
+                       str = str.simplified();
+                       count++;
+                       switch(count)
+                       {
+                                case 1:  displayString.append("破解需要的握手信息:\nSSID : " + str + "\n"); break;
+                                case 2:  displayString.append("AP MAC : " + str + "\n"); break;
+                                case 3:  displayString.append("STATION MAC : " + str + "\n"); break;
+                                case 4:  displayString.append("AP Nonce : " + str + "\n"); break;
+                                case 5:  displayString.append("STATION Nonce : " + str + "\n"); break;
+                                case 6:  displayString.append("Step2 Data : " + str + "\n"); break;
+                                case 7:  displayString.append("MIC : " + str + "\n"); break;
+                                case 8:  displayString.append("被破解的AP:\nSSID : " + str); break;
+                       }
                    }
+                   QMessageBox::information(this, "抓取到破解密钥所需要的信息", displayString);
         }
 }
 
@@ -213,4 +230,92 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_dictionary->setEnabled(true);
             ui->pushButton_scan->setText("scan");
         }
+}
+
+void MainWindow::on_pushButton_crack_clicked()
+{
+
+    if(ui->pushButton_crack->text() == "crack")
+    {
+        if(ui->lineEdit_dictionary->text().toLocal8Bit() == "")
+        {
+                QMessageBox::warning(this, "warning", "you must input the <DICTIONARY FILE PATH> before cracking!!! ");
+                return;
+        }
+
+        ui->pushButton_scan->setEnabled(false);
+        ui->lineEdit_BSSID->setEnabled(false);
+        ui->lineEdit_CH->setEnabled(false);
+        ui->lineEdit_interface->setEnabled(false);
+        ui->lineEdit_dictionary->setEnabled(false);
+        ui->pushButton_crack->setEnabled(false);
+
+        wpa2_handshake_t t_handshake;
+        FILE* t_file=fopen("handshake.txt","r");
+        char t_buffer[1024];
+        fgets(t_buffer,sizeof(t_buffer),t_file);
+        hex2bin(t_buffer,t_handshake.ssid);
+        t_handshake.ssid_len=strlen((char*)t_handshake.ssid);
+        fgets(t_buffer,sizeof(t_buffer),t_file);
+        hex2bin(t_buffer,t_handshake.ap_mac);
+        fgets(t_buffer,sizeof(t_buffer),t_file);
+        hex2bin(t_buffer,t_handshake.sta_mac);
+        fgets(t_buffer,sizeof(t_buffer),t_file);
+        hex2bin(t_buffer,t_handshake.ap_nonce);
+        fgets(t_buffer,sizeof(t_buffer),t_file);
+        hex2bin(t_buffer,t_handshake.sta_nonce);
+        fgets(t_buffer,sizeof(t_buffer),t_file);
+        hex2bin(t_buffer,t_handshake.step2_data);
+        fgets(t_buffer,sizeof(t_buffer),t_file);
+        hex2bin(t_buffer,t_handshake.step2_mic);
+        fclose(t_file);
+        wpa2break_init_mid_value(&t_handshake);
+
+
+
+        FILE *fp;
+        char str[256];
+        long count = 0;
+        if((fp=fopen(ui->lineEdit_dictionary->text().toLocal8Bit(), "r")) == NULL){
+            qDebug() << "cannot open file " +  ui->lineEdit_dictionary->text().toLocal8Bit();
+            return;
+        }
+
+
+
+
+        while(!feof(fp))
+        {
+            if(fgets(str, sizeof(str), fp) != NULL)
+            {
+                count++;
+                ui->statusBar->setSizeGripEnabled(false);
+                ui->statusBar->showMessage( "KEY COUNT : " +  QString::number(count));
+
+                str[strlen(str)-2] = '\0';
+                if (1 == wpa2break_is_password(&t_handshake,(uint8_t*)str, strlen(str)))
+                {
+                    QMessageBox::information(this,  "KEY FOUND", "KEY ： " + QString(QLatin1String(str)));
+                    ui->pushButton_crack->setEnabled(true);
+                    ui->lineEdit_BSSID->setEnabled(true);
+                    ui->lineEdit_CH->setEnabled(true);
+                    ui->lineEdit_interface->setEnabled(true);
+                    ui->lineEdit_dictionary->setEnabled(true);
+                    ui->pushButton_scan->setEnabled(true);
+                    return;
+                }
+            }
+        }
+        QMessageBox::information(this,  "KEY NOT FOUND", "There is no valid password in the dictionary!!! ");
+
+
+        ui->pushButton_crack->setEnabled(true);
+        ui->lineEdit_BSSID->setEnabled(true);
+        ui->lineEdit_CH->setEnabled(true);
+        ui->lineEdit_interface->setEnabled(true);
+        ui->lineEdit_dictionary->setEnabled(true);
+        ui->pushButton_scan->setEnabled(true);
+
+
+    }
 }
