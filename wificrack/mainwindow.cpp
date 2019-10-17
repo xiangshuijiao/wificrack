@@ -16,6 +16,19 @@ MainWindow::MainWindow(QWidget *parent) :
     ap_file->addWatchPath("./ap.txt");
 
     ui->setupUi(this);
+
+    // must under { ui->setupUi(this); }
+    ui->statusBar->setSizeGripEnabled(false);
+    ui->statusBar->showMessage( "number : " +  QString::number(15, 10));
+
+
+    ui->lineEdit_interface->setPlaceholderText("INTERFACE NAME");
+    ui->lineEdit_BSSID->setPlaceholderText("BSSID MAC");
+    ui->lineEdit_CH->setPlaceholderText("CHANNEL");
+    ui->lineEdit_dictionary->setPlaceholderText("DICTIONARY FILE PATH");
+    ui->textEdit_AP->setPlaceholderText("AP INFORMATION：\n                  BSSID、CHANNEL、ESSID");
+    ui->textEdit_STATION->setPlaceholderText("STATION INFORMATION：\n                 AP MAC、STATION MAC");
+
 }
 
 MainWindow::~MainWindow()
@@ -67,6 +80,7 @@ void MainWindow::slot_file_changed(QString path)
 
 void MainWindow::on_pushButton_scan_clicked()
 {
+
         bash->start("bash");
         bash->waitForStarted();
 
@@ -78,6 +92,7 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_BSSID->setEnabled(false);
             ui->lineEdit_CH->setEnabled(false);
             ui->lineEdit_interface->setEnabled(false);
+            ui->lineEdit_dictionary->setEnabled(false);
             ui->pushButton_scan->setText("cancel");
         }
         else
@@ -88,6 +103,7 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_BSSID->setEnabled(true);
             ui->lineEdit_CH->setEnabled(true);
             ui->lineEdit_interface->setEnabled(true);
+            ui->lineEdit_dictionary->setEnabled(true);
             ui->pushButton_scan->setText("scan");
         }
 }
