@@ -29,6 +29,7 @@ private:
     FileSystemWatcher *ap_file;
     FileSystemWatcher *station_file;
     FileSystemWatcher *handshake_file;
+    FileSystemWatcher *show_file;
 };
 
 #endif // MAINWINDOW_H

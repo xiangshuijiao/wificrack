@@ -51,20 +51,6 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QTextEdit" name="textEdit_AP"/>
-        </item>
-        <item>
-         <widget class="QTextEdit" name="textEdit_STATION">
-          <property name="placeholderText">
-           <string notr="true"/>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QLineEdit" name="lineEdit_dictionary"/>
@@ -79,6 +65,20 @@
           </property>
           <property name="text">
            <string>crack</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QTextEdit" name="textEdit_AP"/>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="textEdit_STATION">
+          <property name="placeholderText">
+           <string notr="true"/>
           </property>
          </widget>
         </item>
