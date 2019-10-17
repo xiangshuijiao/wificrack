@@ -30,6 +30,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(show_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
     show_file->addWatchPath("./show.txt");
 
+    // handshake file watcher
+    handshake_file = new FileSystemWatcher();
+    connect(handshake_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
+    handshake_file->addWatchPath("./handshake.txt");
+
 
     ui->lineEdit_interface->setPlaceholderText("INTERFACE NAME");
     ui->lineEdit_BSSID->setPlaceholderText("BSSID MAC");
@@ -109,6 +114,27 @@ void MainWindow::slot_file_changed(QString path)
                    }
                     ui->textEdit_STATION->clear();
                     ui->textEdit_STATION->setPlainText(displayString);
+        }
+
+        // show.txt changed
+        if(strName == QString::fromLocal8Bit("show.txt"))
+        {
+                    QString displayString;
+                    QFile file("./show.txt");
+                    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    {
+                        qDebug() << "open show.txt error\n" << endl;
+                   }
+                    while(!file.atEnd())
+                   {
+                       QByteArray line = file.readLine();
+                       QString str(line);
+                       QStringList list = str.simplified().split(" ");
+
+                       // must under { ui->setupUi(this); }
+                       ui->statusBar->setSizeGripEnabled(false);
+                       ui->statusBar->showMessage( "COUNT : " +  list.at(0));
+                   }
         }
 
         // show.txt changed
