@@ -56,6 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_dictionary->setPlaceholderText("DICTIONARY FILE PATH");
     ui->textEdit_AP->setPlaceholderText("AP INFORMATION：\n                  BSSID、CHANNEL、ESSID");
     ui->textEdit_STATION->setPlaceholderText("STATION INFORMATION：\n                 AP MAC、STATION MAC");
+    ui->textEdit_handshake->setPlaceholderText("HADNSHAKE INFORMATION：\n                 TWO MAC、TWO NONCE、MIC、STEP2 DATA、SSID");
 
 }
 
@@ -161,6 +162,7 @@ void MainWindow::slot_file_changed(QString path)
                         qDebug() << "open handshake.txt error\n" << endl;
                    }
                     int count = 0;
+                    QString temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8;
                     while(!file.atEnd())
                    {
 
@@ -170,18 +172,28 @@ void MainWindow::slot_file_changed(QString path)
                        count++;
                        switch(count)
                        {
-                                case 1:  displayString.append("握手信息:\nSSID : " + str + "\n"); break;
-                                case 2:  displayString.append("AP MAC : " + str + "\n"); break;
-                                case 3:  displayString.append("STATION MAC : " + str + "\n"); break;
-                                case 4:  displayString.append("AP Nonce : " + str + "\n"); break;
-                                case 5:  displayString.append("STATION Nonce : " + str + "\n"); break;
-                                case 6:  displayString.append("Step2 Data : " + str + "\n"); break;
-                                case 7:  displayString.append("MIC : " + str + "\n"); break;
-                                case 8:  displayString.append("被破解的AP:\nSSID : " + str);
+                                case 1:  temp1 = "SSID :\t\t" + str + "\n"; break;
+                                case 2:  temp2 = "AP MAC : \t\t" + str + "\n"; break;
+                                case 3:  temp3 = "STATION MAC : \t" + str + "\n"; break;
+                                case 4:  temp4 = "AP Nonce : \t\t" + str + "\n"; break;
+                                case 5:  temp5 = "STATION Nonce : \t" + str + "\n"; break;
+                                case 6:  temp6 = "Step2 Data : \t" + str; break;
+                                case 7:  temp7 = "MIC : \t\t" + str + "\n"; break;
+                                case 8:  temp8 = "被破解的AP:\t" + str + "\n";
                                               AP_SSID = str;break;
+                                default: break;
                        }
                    }
-                   QMessageBox::information(this, "抓取到破解密钥所需要的信息", displayString);
+                    displayString.append(temp8);
+                    displayString.append(temp1);
+                    displayString.append(temp2);
+                    displayString.append(temp3);
+                    displayString.append(temp4);
+                    displayString.append(temp5);
+                    displayString.append(temp7);
+                    displayString.append(temp6);
+                    ui->textEdit_handshake->clear();
+                    ui->textEdit_handshake->setPlainText(displayString);
         }
 
 
@@ -218,13 +230,39 @@ void MainWindow::slot_file_changed(QString path)
                     int count = 0;
                     while(!file.atEnd())
                    {
+                         QFile file_temp("./handshake.txt");;
+                         int count_temp;
+                         QByteArray line_temp;
+
+
                        QByteArray line = file.readLine();
                        QString str(line);
                        str = str.simplified();
                        count++;
                        switch(count)
                        {
-                                case 1:  displayString.append("破解 [ "+ AP_SSID + " ] 使用了 [ " +  str   +" ] 条字典中的密码" + "\n"); break;
+                                case 1:
+                                                    // 从握手文件中获取AP_SSID
+
+                                                   if (!file_temp.open(QIODevice::ReadOnly | QIODevice::Text))
+                                                   {
+                                                       qDebug() << "open handshake.txt error\n" << endl;
+                                                  }
+                                                   count_temp = 0;
+                                                   while(!file_temp.atEnd())
+                                                  {
+                                                      line_temp = file_temp.readLine();
+                                                      QString str_temp(line_temp);
+                                                      str_temp = str_temp.simplified();
+                                                      count_temp++;
+                                                      switch(count_temp)
+                                                      {
+                                                               case 8:     AP_SSID = str_temp;break;
+                                                               default: break;
+                                                      }
+                                                  }
+
+                                                displayString.append("破解 [ "+ AP_SSID + " ] 使用了 [ " +  str   +" ] 条字典中的密码" + "\n"); break;
                                 case 2:
                                               if ( str == "failed")
                                               {
@@ -263,6 +301,15 @@ void MainWindow::on_pushButton_scan_clicked()
                     return;
             }
 
+
+            ui->pushButton_crack->setEnabled(false);
+            ui->lineEdit_BSSID->setEnabled(false);
+            ui->lineEdit_CH->setEnabled(false);
+            ui->lineEdit_interface->setEnabled(false);
+            ui->lineEdit_dictionary->setEnabled(false);
+            ui->pushButton_scan->setText("cancel");
+            ui->textEdit_handshake->clear();
+
             bash->start("bash");
             bash->waitForStarted();
             QString command("../airodump-ng  " + ui->lineEdit_interface->text().toLocal8Bit() );
@@ -281,12 +328,7 @@ void MainWindow::on_pushButton_scan_clicked()
             qDebug() << qba.data();
             bash->write(qba.data());
 
-            ui->pushButton_crack->setEnabled(false);
-            ui->lineEdit_BSSID->setEnabled(false);
-            ui->lineEdit_CH->setEnabled(false);
-            ui->lineEdit_interface->setEnabled(false);
-            ui->lineEdit_dictionary->setEnabled(false);
-            ui->pushButton_scan->setText("cancel");
+
         }
         else
         {
@@ -303,7 +345,7 @@ void MainWindow::on_pushButton_scan_clicked()
 
 void MainWindow::on_pushButton_crack_clicked()
 {
-    if(ui->pushButton_scan->text() == "crack")
+    if(ui->pushButton_crack->text() == "crack")
     {
         if(ui->lineEdit_dictionary->text().toLocal8Bit() == "")
         {
@@ -313,7 +355,7 @@ void MainWindow::on_pushButton_crack_clicked()
 
         bash->start("bash");
         bash->waitForStarted();
-        QString command("./crack  " + ui->lineEdit_dictionary->text().toLocal8Bit() );
+        QString command("../crack  " + ui->lineEdit_dictionary->text().toLocal8Bit() );
         command.append("\n");
         qDebug() << command;
         QByteArray qba = command.toLatin1();
