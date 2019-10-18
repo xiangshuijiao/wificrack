@@ -24,10 +24,14 @@ private slots:
 
     void on_pushButton_crack_clicked();
 
+    void on_toolButton_directory_slecter_clicked();
+
 private:
     Ui::MainWindow *ui;
     QProcess *bash;
     QString AP_SSID;
+
+    qint64 pos_key_file;
 
     FileSystemWatcher *ap_file;
     FileSystemWatcher *station_file;

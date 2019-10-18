@@ -11,14 +11,16 @@
 #include <QFileInfo>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QFileDialog>
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-
+    pos_key_file = 0;
     bash = new QProcess(this);
+
 
     // ap file watcher
     ap_file = new FileSystemWatcher();
@@ -53,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_interface->setPlaceholderText("INTERFACE NAME");
     ui->lineEdit_BSSID->setPlaceholderText("BSSID MAC");
     ui->lineEdit_CH->setPlaceholderText("CHANNEL");
-    ui->lineEdit_dictionary->setPlaceholderText("DICTIONARY FILE PATH");
+//    ui->lineEdit_dictionary->setPlaceholderText("DICTIONARY FILE PATH");
     ui->textEdit_AP->setPlaceholderText("AP INFORMATION：\n                  BSSID、CHANNEL、ESSID");
     ui->textEdit_STATION->setPlaceholderText("STATION INFORMATION：\n                 AP MAC、STATION MAC");
     ui->textEdit_handshake->setPlaceholderText("HADNSHAKE INFORMATION：\n                 TWO MAC、TWO NONCE、MIC、STEP2 DATA、SSID");
@@ -227,7 +229,9 @@ void MainWindow::slot_file_changed(QString path)
                     {
                         qDebug() << "open key.txt error\n" << endl;
                    }
-                    int count = 0;
+                    int count = -1;
+
+//                    file.seek(pos_key_file);
                     while(!file.atEnd())
                    {
                          QFile file_temp("./handshake.txt");;
@@ -237,47 +241,29 @@ void MainWindow::slot_file_changed(QString path)
 
                        QByteArray line = file.readLine();
                        QString str(line);
+                       QStringList list ;
                        str = str.simplified();
                        count++;
-                       switch(count)
+                       switch(count % 2)
                        {
+                                case 0:
+                                               list = str.simplified().split(" ");
+                                                displayString.append("破解 [ "+ list.at(0) + " ] 使用了 [ " +  list.at(1)   +" ] 条字典中的密码" + "\n"); break;
                                 case 1:
-                                                    // 从握手文件中获取AP_SSID
-
-                                                   if (!file_temp.open(QIODevice::ReadOnly | QIODevice::Text))
-                                                   {
-                                                       qDebug() << "open handshake.txt error\n" << endl;
-                                                  }
-                                                   count_temp = 0;
-                                                   while(!file_temp.atEnd())
-                                                  {
-                                                      line_temp = file_temp.readLine();
-                                                      QString str_temp(line_temp);
-                                                      str_temp = str_temp.simplified();
-                                                      count_temp++;
-                                                      switch(count_temp)
-                                                      {
-                                                               case 8:     AP_SSID = str_temp;break;
-                                                               default: break;
-                                                      }
-                                                  }
-
-                                                displayString.append("破解 [ "+ AP_SSID + " ] 使用了 [ " +  str   +" ] 条字典中的密码" + "\n"); break;
-                                case 2:
-                                              if ( str == "failed")
+                                               list = str.simplified().split(" ");
+                                              if ( list.length() == 1)
                                               {
                                                         displayString.append("字典中无有效密码\n");
-                                                        count = 1000;  // not execute case 3;
                                               }
                                               else
                                               {
-                                                        displayString.append("破解成功, 密码为 [ ");
+                                                        displayString.append("破解成功, 密码为 [ " + list.at(1) + " ]\n");
                                               }
                                               break;
-
-                                case 3:  displayString.append(str + " ]"); break;
                                 default: break;
                        }
+
+//                       pos_key_file = file.pos();
                    }
                    QMessageBox::information(this, "破解结果", displayString);
         }
@@ -306,7 +292,8 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_BSSID->setEnabled(false);
             ui->lineEdit_CH->setEnabled(false);
             ui->lineEdit_interface->setEnabled(false);
-            ui->lineEdit_dictionary->setEnabled(false);
+            ui->comboBox_directory_path->setEnabled(false);
+            ui->toolButton_directory_slecter->setEnabled(false);
             ui->pushButton_scan->setText("cancel");
             ui->textEdit_handshake->clear();
 
@@ -338,7 +325,8 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_BSSID->setEnabled(true);
             ui->lineEdit_CH->setEnabled(true);
             ui->lineEdit_interface->setEnabled(true);
-            ui->lineEdit_dictionary->setEnabled(true);
+            ui->comboBox_directory_path->setEnabled(true);
+            ui->toolButton_directory_slecter->setEnabled(true);
             ui->pushButton_scan->setText("scan");
         }
 }
@@ -347,7 +335,7 @@ void MainWindow::on_pushButton_crack_clicked()
 {
     if(ui->pushButton_crack->text() == "crack")
     {
-        if(ui->lineEdit_dictionary->text().toLocal8Bit() == "")
+        if(ui->comboBox_directory_path->currentText() == "")
         {
                 QMessageBox::warning(this, "warning", "you must input the <DICTIONARY FILE PATH> before cracking!!! ");
                 return;
@@ -355,7 +343,7 @@ void MainWindow::on_pushButton_crack_clicked()
 
         bash->start("bash");
         bash->waitForStarted();
-        QString command("../crack  " + ui->lineEdit_dictionary->text().toLocal8Bit() );
+        QString command("../crack  " + ui->comboBox_directory_path->currentText() );
         command.append("\n");
         qDebug() << command;
         QByteArray qba = command.toLatin1();
@@ -365,7 +353,8 @@ void MainWindow::on_pushButton_crack_clicked()
         ui->lineEdit_BSSID->setEnabled(false);
         ui->lineEdit_CH->setEnabled(false);
         ui->lineEdit_interface->setEnabled(false);
-        ui->lineEdit_dictionary->setEnabled(false);
+        ui->comboBox_directory_path->setEnabled(false);
+        ui->toolButton_directory_slecter->setEnabled(false);
         ui->pushButton_crack->setText("cancel");
     }
     else
@@ -376,8 +365,24 @@ void MainWindow::on_pushButton_crack_clicked()
         ui->lineEdit_BSSID->setEnabled(true);
         ui->lineEdit_CH->setEnabled(true);
         ui->lineEdit_interface->setEnabled(true);
-        ui->lineEdit_dictionary->setEnabled(true);
+        ui->comboBox_directory_path->setEnabled(true);
+        ui->toolButton_directory_slecter->setEnabled(true);
         ui->pushButton_crack->setText("crack");
     }
 
+}
+
+void MainWindow::on_toolButton_directory_slecter_clicked()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("SELECT DICTIONARY FILE"));
+    if(!filename.isEmpty())
+    {
+            if (ui->comboBox_directory_path->findText(filename) == -1)
+            {
+                    ui->comboBox_directory_path->addItem(filename);
+            }
+
+            ui->comboBox_directory_path->setCurrentIndex(ui->comboBox_directory_path->findText(filename));
+            qDebug() << ui->comboBox_directory_path->currentText();
+    }
 }
