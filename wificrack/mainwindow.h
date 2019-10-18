@@ -26,6 +26,8 @@ private slots:
 
     void on_toolButton_directory_slecter_clicked();
 
+    void on_toolButton_handshake_select_clicked();
+
 private:
     Ui::MainWindow *ui;
     QProcess *bash;

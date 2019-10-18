@@ -311,6 +311,8 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_interface->setEnabled(false);
             ui->comboBox_directory_path->setEnabled(false);
             ui->toolButton_directory_slecter->setEnabled(false);
+            ui->comboBox_handshake_path->setEnabled(false);
+            ui->toolButton_handshake_select->setEnabled(false);
             ui->pushButton_scan->setText("cancel");
             ui->textEdit_handshake->clear();
 
@@ -344,6 +346,8 @@ void MainWindow::on_pushButton_scan_clicked()
             ui->lineEdit_interface->setEnabled(true);
             ui->comboBox_directory_path->setEnabled(true);
             ui->toolButton_directory_slecter->setEnabled(true);
+            ui->comboBox_handshake_path->setEnabled(true);
+            ui->toolButton_handshake_select->setEnabled(true);
             ui->pushButton_scan->setText("scan");
         }
 }
@@ -354,24 +358,38 @@ void MainWindow::on_pushButton_crack_clicked()
     {
         if(ui->comboBox_directory_path->currentText() == "")
         {
-                QMessageBox::warning(this, "warning", "you must input the <DICTIONARY FILE PATH> before cracking!!! ");
+                QMessageBox::warning(this, "warning", "you must select the <DICTIONARY FILE> before cracking!!! ");
+                return;
+        }
+
+        if(ui->comboBox_handshake_path->currentText() == "")
+        {
+                QMessageBox::warning(this, "warning", "you must select the <HANDSHAKE FILE> before cracking!!! ");
                 return;
         }
 
         bash->start("bash");
         bash->waitForStarted();
+        QString command1("cp   " + ui->comboBox_handshake_path->currentText()  + "  handshake.txt\n" );
+        bash->write(command1.toStdString().c_str());
+
+
         QString command("../crack  " + ui->comboBox_directory_path->currentText() );
         command.append("\n");
         qDebug() << command;
         QByteArray qba = command.toLatin1();
         bash->write(qba.data());
 
+        // bash结束时调用crack槽函数就相当于主动点击了cancel按钮
+//        connect(bash, SIGNAL(finished(int)), this, SLOT(on_pushButton_crack_clicked()));
         ui->pushButton_scan->setEnabled(false);
         ui->lineEdit_BSSID->setEnabled(false);
         ui->lineEdit_CH->setEnabled(false);
         ui->lineEdit_interface->setEnabled(false);
         ui->comboBox_directory_path->setEnabled(false);
         ui->toolButton_directory_slecter->setEnabled(false);
+        ui->comboBox_handshake_path->setEnabled(false);
+        ui->toolButton_handshake_select->setEnabled(false);
         ui->pushButton_crack->setText("cancel");
     }
     else
@@ -384,6 +402,8 @@ void MainWindow::on_pushButton_crack_clicked()
         ui->lineEdit_interface->setEnabled(true);
         ui->comboBox_directory_path->setEnabled(true);
         ui->toolButton_directory_slecter->setEnabled(true);
+        ui->comboBox_handshake_path->setEnabled(true);
+        ui->toolButton_handshake_select->setEnabled(true);
         ui->pushButton_crack->setText("crack");
     }
 
@@ -401,5 +421,20 @@ void MainWindow::on_toolButton_directory_slecter_clicked()
 
             ui->comboBox_directory_path->setCurrentIndex(ui->comboBox_directory_path->findText(filename));
             qDebug() << ui->comboBox_directory_path->currentText();
+    }
+}
+
+void MainWindow::on_toolButton_handshake_select_clicked()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("SELECT HANDSHAKE FILE"));
+    if(!filename.isEmpty())
+    {
+            if (ui->comboBox_handshake_path->findText(filename) == -1)
+            {
+                    ui->comboBox_handshake_path->addItem(filename);
+            }
+
+            ui->comboBox_handshake_path->setCurrentIndex(ui->comboBox_handshake_path->findText(filename));
+            qDebug() << ui->comboBox_handshake_path->currentText();
     }
 }
