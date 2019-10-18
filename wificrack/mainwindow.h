@@ -29,9 +29,11 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QProcess *bash;
+    QProcess *bash1;
     QString AP_SSID;
 
     qint64 pos_key_file;
+    int count_handshake_file;
 
     FileSystemWatcher *ap_file;
     FileSystemWatcher *station_file;

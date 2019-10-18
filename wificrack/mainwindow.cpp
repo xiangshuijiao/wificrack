@@ -19,7 +19,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     pos_key_file = 0;
+    count_handshake_file = 0;
     bash = new QProcess(this);
+    bash1 = new QProcess(this);
+    bash1->start("bash");
 
 
     // ap file watcher
@@ -196,6 +199,21 @@ void MainWindow::slot_file_changed(QString path)
                     displayString.append(temp6);
                     ui->textEdit_handshake->clear();
                     ui->textEdit_handshake->setPlainText(displayString);
+
+
+
+
+                    // back-up handshake.txt
+
+                    count_handshake_file++;
+                    bash1->waitForStarted();
+                    QString command("cp handshake.txt  ../handshake/"  + AP_SSID +  "\n" );
+                    bash1->write(command.toStdString().c_str());
+                    qDebug() << command.toStdString().c_str();
+
+
+
+
         }
 
 
@@ -235,7 +253,6 @@ void MainWindow::slot_file_changed(QString path)
                     while(!file.atEnd())
                    {
                          QFile file_temp("./handshake.txt");;
-                         int count_temp;
                          QByteArray line_temp;
 
 
