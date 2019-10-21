@@ -19,6 +19,7 @@ public:
 
 private slots:
     void slot_file_changed(QString path);
+    void slot_modify_handshake_file();
 
     void on_pushButton_scan_clicked();
 
@@ -27,6 +28,8 @@ private slots:
     void on_toolButton_directory_slecter_clicked();
 
     void on_toolButton_handshake_select_clicked();
+
+
 
 private:
     Ui::MainWindow *ui;

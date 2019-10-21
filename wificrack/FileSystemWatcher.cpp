@@ -112,6 +112,7 @@ void FileSystemWatcher::fileUpdated(const QString &path)
     QString strPath = file.absolutePath();
     QString strName = file.fileName();
 
-     qDebug() << QString("The file %1 at path %2 is updated").arg(strName).arg(strPath);
- }
+    qDebug() << QString("The file %1 at path %2 is updated").arg(strName).arg(strPath);
+}
+
 

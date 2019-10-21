@@ -12,6 +12,7 @@
 #include <QTextStream>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QTextCodec>
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -160,8 +161,14 @@ void MainWindow::slot_file_changed(QString path)
         // handshake.txt changed
         if(strName == QString::fromLocal8Bit("handshake.txt"))
         {
+
+
+
+
+
                     QString displayString;
                     QFile file("./handshake.txt");
+                    QString command2;
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
                         qDebug() << "open handshake.txt error\n" << endl;
@@ -177,43 +184,45 @@ void MainWindow::slot_file_changed(QString path)
                        count++;
                        switch(count)
                        {
-                                case 1:  temp1 = "SSID :\t\t" + str + "\n"; break;
-                                case 2:  temp2 = "AP MAC : \t\t" + str + "\n"; break;
-                                case 3:  temp3 = "STATION MAC : \t" + str + "\n"; break;
-                                case 4:  temp4 = "AP Nonce : \t\t" + str + "\n"; break;
-                                case 5:  temp5 = "STATION Nonce : \t" + str + "\n"; break;
-                                case 6:  temp6 = "Step2 Data : \t" + str; break;
-                                case 7:  temp7 = "MIC : \t\t" + str + "\n"; break;
-                                case 8:  temp8 = "被破解的AP:\t" + str + "\n";
-                                              AP_SSID = str;break;
-                                default: break;
+                                case 1:  temp1 =  str; break;
+                                case 2:  temp2 = str; break;
+                                case 3:  temp3 = str; break;
+                                case 4:  temp4 = str; break;
+                                case 5:  temp5 = str; break;
+                                case 6:  temp6 = str; break;
+                                case 7:  temp7 = str; break;
+                                case 8:  temp8 = str;
+                                              AP_SSID = str;
+                                              temp1 = QString(QLatin1String(temp8.toUtf8().toHex()));
+                                             break;
+                                default: ;
                        }
                    }
-                    displayString.append(temp8);
-                    displayString.append(temp1);
-                    displayString.append(temp2);
-                    displayString.append(temp3);
-                    displayString.append(temp4);
-                    displayString.append(temp5);
-                    displayString.append(temp7);
-                    displayString.append(temp6);
+
+
+                    displayString.append("被破解的AP:\t" + temp8 + "\n");
+                    displayString.append("SSID :\t\t" + temp1+ "\n");// temp1 has '\n' in the end
+                    displayString.append("AP MAC : \t\t" + temp2 + "\n");
+                    displayString.append("STATION MAC : \t" + temp3 + "\n");
+                    displayString.append("AP Nonce : \t\t" + temp4 + "\n");
+                    displayString.append("STATION Nonce : \t" + temp5 + "\n");
+                    displayString.append("MIC : \t\t" + temp7 + "\n");
+                    displayString.append("Step2 Data : \t" + temp6);
                     ui->textEdit_handshake->clear();
                     ui->textEdit_handshake->setPlainText(displayString);
 
 
 
 
-                    // back-up handshake.txt
-
-                    count_handshake_file++;
-                    bash1->waitForStarted();
-                    QString command("cp handshake.txt  ../handshake/"  + AP_SSID +  "\n" );
-                    bash1->write(command.toStdString().c_str());
-                    qDebug() << command.toStdString().c_str();
-
-
-
-
+                    //modify  ssid and  back-up handshake.txt
+//                    QTextCodec *code = QTextCodec::codecForName("GB2312");
+                    QFile file_backup("../handshake/" + AP_SSID);
+                    if (!file_backup.open(QIODevice::WriteOnly | QIODevice::Text))
+                    {
+                        qDebug() << "open file   ../handshake/" + AP_SSID  <<  "    failed" << endl;
+                   }
+                    file_backup.write((temp1 + "\n"+ temp2 + "\n" + temp3 + "\n" + temp4 + "\n" + temp5 + "\n"+ temp6 + "\n" + temp7 + "\n" + temp8).toUtf8());
+//                    file_backup.close();
         }
 
 
@@ -286,7 +295,10 @@ void MainWindow::slot_file_changed(QString path)
         }
 }
 
+void MainWindow::slot_modify_handshake_file()
+{
 
+}
 
 
 
