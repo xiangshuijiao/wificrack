@@ -161,11 +161,6 @@ void MainWindow::slot_file_changed(QString path)
         // handshake.txt changed
         if(strName == QString::fromLocal8Bit("handshake.txt"))
         {
-
-
-
-
-
                     QString displayString;
                     QFile file("./handshake.txt");
                     QString command2;
@@ -198,6 +193,7 @@ void MainWindow::slot_file_changed(QString path)
                                 default: ;
                        }
                    }
+//                    QMessageBox::information(this, "注意", "已经捕捉到足够多的信息用于破解 [ " + AP_SSID + " ]");
 
 
                     displayString.append("被破解的AP:\t" + temp8 + "\n");
@@ -212,17 +208,12 @@ void MainWindow::slot_file_changed(QString path)
                     ui->textEdit_handshake->setPlainText(displayString);
 
 
-
-
-                    //modify  ssid and  back-up handshake.txt
-//                    QTextCodec *code = QTextCodec::codecForName("GB2312");
                     QFile file_backup("../handshake/" + AP_SSID);
                     if (!file_backup.open(QIODevice::WriteOnly | QIODevice::Text))
                     {
                         qDebug() << "open file   ../handshake/" + AP_SSID  <<  "    failed" << endl;
                    }
                     file_backup.write((temp1 + "\n"+ temp2 + "\n" + temp3 + "\n" + temp4 + "\n" + temp5 + "\n"+ temp6 + "\n" + temp7 + "\n" + temp8).toUtf8());
-//                    file_backup.close();
         }
 
 
@@ -295,7 +286,7 @@ void MainWindow::slot_file_changed(QString path)
         }
 }
 
-void MainWindow::slot_modify_handshake_file()
+void MainWindow::slot_modify_handshake_file(QString path)
 {
 
 }

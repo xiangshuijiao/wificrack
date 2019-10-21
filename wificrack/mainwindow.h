@@ -19,7 +19,7 @@ public:
 
 private slots:
     void slot_file_changed(QString path);
-    void slot_modify_handshake_file();
+    void slot_modify_handshake_file(QString path);
 
     void on_pushButton_scan_clicked();
 
