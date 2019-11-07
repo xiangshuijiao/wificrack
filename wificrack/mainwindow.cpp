@@ -26,35 +26,36 @@ MainWindow::MainWindow(QWidget *parent) :
     bash1->start("bash");
 
 
+
     // ap file watcher
     ap_file = new FileSystemWatcher();
     connect(ap_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
-    ap_file->addWatchPath("./ap.txt");
+    ap_file->addWatchPath("./libap.so.0");
 
     // station file watcher
     station_file = new FileSystemWatcher();
     connect(station_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
-    station_file->addWatchPath("./station.txt");
+    station_file->addWatchPath("./libstation.so.0");
 
     // show file watcher
     show_file = new FileSystemWatcher();
     connect(show_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
-    show_file->addWatchPath("./show.txt");
+    show_file->addWatchPath("./libshow.so.1");
 
     // handshake file watcher
     handshake_file = new FileSystemWatcher();
     connect(handshake_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
-    handshake_file->addWatchPath("./handshake.txt");
+    handshake_file->addWatchPath("./libhandshake.so.1");
 
     // key file watcher
     key_file = new FileSystemWatcher();
     connect(key_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
-    key_file->addWatchPath("./key.txt");
+    key_file->addWatchPath("./libkey.so.0");
 
     // show2 file watcher
     show2_file = new FileSystemWatcher();
     connect(show2_file, SIGNAL(emit_signal_file_changed(QString)), this, SLOT(slot_file_changed(QString)));
-    show2_file->addWatchPath("./show2.txt");
+    show2_file->addWatchPath("./libshow2.so.1");
 
     ui->lineEdit_interface->setPlaceholderText("INTERFACE NAME");
     ui->lineEdit_BSSID->setPlaceholderText("BSSID MAC");
@@ -78,22 +79,25 @@ void MainWindow::slot_file_changed(QString path)
         QString strName = file.fileName();
 
         // ap.txt changed
-        if(strName == QString::fromLocal8Bit("ap.txt"))
+        if(strName == QString::fromLocal8Bit("libap.so.0"))
         {
                     QString displayString;
                     displayString.append("BSSID\t\tCH\tESSID\n");
-                    QFile file("./ap.txt");
+                    QFile file("./libap.so.0");
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        qDebug() << "open ap.txt error\n" << endl;
+                        qDebug() << "open libap.so.0 error\n" << endl;
                    }
+                    ap_number = 0;
                     while(!file.atEnd())
                    {
+
                        QByteArray line = file.readLine();
                        QString str(line);
                        QStringList list = str.simplified().split(" ");
                        if(list.length() < 3)
                                 continue;
+                       ap_number++;
                        displayString.append(list.at(0));
                        displayString.append("\t");
                        displayString.append(list.at(1));
@@ -106,17 +110,19 @@ void MainWindow::slot_file_changed(QString path)
         }
 
         // station.txt changed
-        if(strName == QString::fromLocal8Bit("station.txt"))
+        if(strName == QString::fromLocal8Bit("libstation.so.0"))
         {
                     QString displayString;
                     displayString.append("AP MAC\t\tSTATION MAC\n");
-                    QFile file("./station.txt");
+                    QFile file("./libstation.so.0");
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        qDebug() << "open station.txt error\n" << endl;
+                        qDebug() << "open libstation.so.0 error\n" << endl;
                    }
+                    station_number = 0;
                     while(!file.atEnd())
                    {
+                        station_number++;
                        QByteArray line = file.readLine();
                        QString str(line);
                        QStringList list = str.simplified().split(" ");
@@ -138,13 +144,13 @@ void MainWindow::slot_file_changed(QString path)
         }
 
         // show.txt changed
-        if(strName == QString::fromLocal8Bit("show.txt"))
+        if(strName == QString::fromLocal8Bit("libshow.so.1"))
         {
                     QString displayString;
-                    QFile file("./show.txt");
+                    QFile file("./libshow.so.1");
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        qDebug() << "open show.txt error\n" << endl;
+                        qDebug() << "open libshow.so.1 error\n" << endl;
                    }
                     while(!file.atEnd())
                    {
@@ -154,19 +160,19 @@ void MainWindow::slot_file_changed(QString path)
 
                        // must under { ui->setupUi(this); }
                        ui->statusBar->setSizeGripEnabled(false);
-                       ui->statusBar->showMessage( "FRAME NUMBER : " +  list.at(0));
+                       ui->statusBar->showMessage( "FRAME NUMBER : " +  list.at(0) + "\tAP NUMBER : " + QString::number(ap_number) + "\t STATION NUMBER : " + QString::number(station_number));
                    }
         }
 
-        // handshake.txt changed
-        if(strName == QString::fromLocal8Bit("handshake.txt"))
+        // libhandshake.so.1 changed
+        if(strName == QString::fromLocal8Bit("libhandshake.so.1"))
         {
                     QString displayString;
-                    QFile file("./handshake.txt");
+                    QFile file("./libhandshake.so.1");
                     QString command2;
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        qDebug() << "open handshake.txt error\n" << endl;
+                        qDebug() << "open libhandshake.so.1 error\n" << endl;
                    }
                     int count = 0;
                     QString temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8;
@@ -208,24 +214,24 @@ void MainWindow::slot_file_changed(QString path)
                     ui->textEdit_handshake->setPlainText(displayString);
 
 
-                    QFile file_backup("../handshake/" + AP_SSID);
+                    QFile file_backup("handshake/" + AP_SSID);
                     if (!file_backup.open(QIODevice::WriteOnly | QIODevice::Text))
                     {
-                        qDebug() << "open file   ../handshake/" + AP_SSID  <<  "    failed" << endl;
+                        qDebug() << "open file   handshake/" + AP_SSID  <<  "    failed" << endl;
                    }
                     file_backup.write((temp1 + "\n"+ temp2 + "\n" + temp3 + "\n" + temp4 + "\n" + temp5 + "\n"+ temp6 + "\n" + temp7 + "\n" + temp8).toUtf8());
         }
 
 
 
-        // show2.txt changed
-        if(strName == QString::fromLocal8Bit("show2.txt"))
+        // libshow2.so.1 changed
+        if(strName == QString::fromLocal8Bit("libshow2.so.1"))
         {
                     QString displayString;
-                    QFile file("./show2.txt");
+                    QFile file("./libshow2.so.1");
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        qDebug() << "open show2.txt error\n" << endl;
+                        qDebug() << "open libshow2.so.1 error\n" << endl;
                    }
                     while(!file.atEnd())
                    {
@@ -238,21 +244,21 @@ void MainWindow::slot_file_changed(QString path)
                    }
         }
 
-        // key.txt changed
-        if(strName == QString::fromLocal8Bit("key.txt"))
+        // libkey.so.0 changed
+        if(strName == QString::fromLocal8Bit("libkey.so.0"))
         {
                     QString displayString;
-                    QFile file("./key.txt");
+                    QFile file("./libkey.so.0");
                     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        qDebug() << "open key.txt error\n" << endl;
+                        qDebug() << "open libkey.so.0 error\n" << endl;
                    }
                     int count = -1;
 
 //                    file.seek(pos_key_file);
                     while(!file.atEnd())
                    {
-                         QFile file_temp("./handshake.txt");;
+                         QFile file_temp("./libhandshake.so.1");;
                          QByteArray line_temp;
 
 
@@ -283,6 +289,7 @@ void MainWindow::slot_file_changed(QString path)
 //                       pos_key_file = file.pos();
                    }
                    QMessageBox::information(this, "破解结果", displayString);
+                   emit ui->pushButton_crack->clicked();
         }
 }
 
@@ -296,8 +303,6 @@ void MainWindow::slot_modify_handshake_file(QString path)
 
 void MainWindow::on_pushButton_scan_clicked()
 {
-
-
 
         if(ui->pushButton_scan->text() == "scan")
         {
@@ -321,7 +326,7 @@ void MainWindow::on_pushButton_scan_clicked()
 
             bash->start("bash");
             bash->waitForStarted();
-            QString command("../airodump-ng  " + ui->lineEdit_interface->text().toLocal8Bit() );
+            QString command("bash  ./wlan0-monitor.sh \n \n\n\n chmod 777 ./libairodump.so \n  ./libairodump.so  " + ui->lineEdit_interface->text().toLocal8Bit() );
             if (ui->lineEdit_BSSID->text().toLocal8Bit() != "")
             {
                     command.append(" --bssid " +  ui->lineEdit_BSSID->text().toLocal8Bit());
@@ -330,11 +335,9 @@ void MainWindow::on_pushButton_scan_clicked()
             {
                     command.append(" -c " +  ui->lineEdit_CH->text().toLocal8Bit());
             }
-            command.append("\n");
-            qDebug() << command;
+            command.append("\n\n");
             QByteArray qba = command.toLatin1();
-            qDebug() << qba;
-            qDebug() << qba.data();
+            qDebug() << command;
             bash->write(qba.data());
 
 
@@ -373,11 +376,11 @@ void MainWindow::on_pushButton_crack_clicked()
 
         bash->start("bash");
         bash->waitForStarted();
-        QString command1("cp   " + ui->comboBox_handshake_path->currentText()  + "  handshake.txt\n" );
+        QString command1("cp   " + ui->comboBox_handshake_path->currentText()  + "  libhandshake.so.1\n" );
         bash->write(command1.toStdString().c_str());
 
 
-        QString command("../crack  " + ui->comboBox_directory_path->currentText() );
+        QString command("chmod 777 ./libcrack.so \n  ./libcrack.so  " + ui->comboBox_directory_path->currentText() );
         command.append("\n");
         qDebug() << command;
         QByteArray qba = command.toLatin1();

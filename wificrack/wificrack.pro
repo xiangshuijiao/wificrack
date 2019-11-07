@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+LIBS += -L.   -laircrack-osdep-1.5.2
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

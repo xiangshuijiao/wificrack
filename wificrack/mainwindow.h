@@ -35,10 +35,14 @@ private:
     Ui::MainWindow *ui;
     QProcess *bash;
     QProcess *bash1;
+    QProcess *pro;
     QString AP_SSID;
 
     qint64 pos_key_file;
     int count_handshake_file;
+
+    int ap_number;
+    int station_number;
 
     FileSystemWatcher *ap_file;
     FileSystemWatcher *station_file;
