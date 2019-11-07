@@ -107,6 +107,7 @@ void MainWindow::slot_file_changed(QString path)
                    }
                     ui->textEdit_AP->clear();
                     ui->textEdit_AP->setPlainText(displayString);
+                    file.close();
         }
 
         // station.txt changed
@@ -141,6 +142,7 @@ void MainWindow::slot_file_changed(QString path)
                    }
                     ui->textEdit_STATION->clear();
                     ui->textEdit_STATION->setPlainText(displayString);
+                    file.close();
         }
 
         // show.txt changed
@@ -162,6 +164,7 @@ void MainWindow::slot_file_changed(QString path)
                        ui->statusBar->setSizeGripEnabled(false);
                        ui->statusBar->showMessage( "FRAME NUMBER : " +  list.at(0) + "\tAP NUMBER : " + QString::number(ap_number) + "\t STATION NUMBER : " + QString::number(station_number));
                    }
+                    file.close();
         }
 
         // libhandshake.so.1 changed
@@ -220,6 +223,8 @@ void MainWindow::slot_file_changed(QString path)
                         qDebug() << "open file   handshake/" + AP_SSID  <<  "    failed" << endl;
                    }
                     file_backup.write((temp1 + "\n"+ temp2 + "\n" + temp3 + "\n" + temp4 + "\n" + temp5 + "\n"+ temp6 + "\n" + temp7 + "\n" + temp8).toUtf8());
+                    file_backup.close();
+                    file.close();
         }
 
 
@@ -242,6 +247,7 @@ void MainWindow::slot_file_changed(QString path)
                        ui->statusBar->setSizeGripEnabled(false);
                        ui->statusBar->showMessage( "KEY NUMBER : " +  str);
                    }
+                    file.close();
         }
 
         // libkey.so.0 changed
@@ -258,7 +264,6 @@ void MainWindow::slot_file_changed(QString path)
 //                    file.seek(pos_key_file);
                     while(!file.atEnd())
                    {
-                         QFile file_temp("./libhandshake.so.1");;
                          QByteArray line_temp;
 
 
@@ -271,16 +276,16 @@ void MainWindow::slot_file_changed(QString path)
                        {
                                 case 0:
                                                list = str.simplified().split(" ");
-                                                displayString.append("破解 [ "+ list.at(0) + " ] 使用了 [ " +  list.at(1)   +" ] 条字典中的密码" + "\n"); break;
+                                                displayString.append("破解 [ "+ list.at(0) + " ] 使用了 [ " +  list.at(1)   +" ] 条字典中的密码" + "，"); break;
                                 case 1:
                                                list = str.simplified().split(" ");
                                               if ( list.length() == 1)
                                               {
-                                                        displayString.append("字典中无有效密码\n");
+                                                        displayString.append("字典中无有效密码。");
                                               }
                                               else
                                               {
-                                                        displayString.append("破解成功, 密码为 [ " + list.at(1) + " ]\n");
+                                                        displayString.append("破解得到的密码是[ " + list.at(1) + " ]。");
                                               }
                                               break;
                                 default: break;
@@ -289,7 +294,8 @@ void MainWindow::slot_file_changed(QString path)
 //                       pos_key_file = file.pos();
                    }
                    QMessageBox::information(this, "破解结果", displayString);
-                   emit ui->pushButton_crack->clicked();
+//                   emit ui->pushButton_crack->clicked();   加上这个crack按钮会被莫名其妙多点好几次，不知道问题出在哪里，还是不要加了
+                   file.close();
         }
 }
 
@@ -376,11 +382,13 @@ void MainWindow::on_pushButton_crack_clicked()
 
         bash->start("bash");
         bash->waitForStarted();
-        QString command1("cp   " + ui->comboBox_handshake_path->currentText()  + "  libhandshake.so.1\n" );
-        bash->write(command1.toStdString().c_str());
+
+//        QString command1("cp   " + ui->comboBox_handshake_path->currentText()  + "  libhandshake.so.1\n" );
+//        qDebug() << "*************************************************\n" << ui->comboBox_handshake_path->currentText() ;
+//        bash->write(command1.toStdString().c_str());
 
 
-        QString command("chmod 777 ./libcrack.so \n  ./libcrack.so  " + ui->comboBox_directory_path->currentText() );
+        QString command("chmod 777  ./libcrack.so \n  ./libcrack.so        "  + ui->comboBox_directory_path->currentText() + "    " + ui->comboBox_handshake_path->currentText() );
         command.append("\n");
         qDebug() << command;
         QByteArray qba = command.toLatin1();
